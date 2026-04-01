@@ -1,47 +1,20 @@
-# edit this configuration file to define what should be installed on
-# your system. help is available in the configuration.nix(5) man page
-# and in the nixos manual (accessible by running 'nixos-help').
-
 { config, pkgs, lib, ... }:
 
 {
   imports =
-    [ # include the results of the hardware scan.
+    [
       ./hardware-configuration.nix
     ];
 
-  # bootloader
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/vda";
   boot.loader.grub.useOSProber = true;
-
-  # use latest kernel
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  networking.hostName = "nixos"; # define your hostname
-  # networking.wireless.enable = true;  # enables wireless support via wpa_supplicant
+  networking.hostName = "nixos-alexis";
 
-  # configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # static network configuration
-  networking.useDHCP = false;
-  networking.interfaces.ens18 = {
-    ipv4.addresses = [{
-      address = "159.31.247.228";
-      prefixLength = 24;
-    }];
-  };
-  networking.defaultGateway = "159.31.247.1";
-  networking.nameservers = [ "8.8.8.8" ];
-
-  # set your time zone
   time.timeZone = "Europe/Paris";
-
-  # select internationalisation properties
   i18n.defaultLocale = "en_US.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";
     LC_IDENTIFICATION = "en_US.UTF-8";
@@ -54,24 +27,17 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  # enable the x11 windowing system
   services.xserver.enable = true;
-
-  # enable the gnome desktop environment
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
-  # configure keymap in x11
   services.xserver.xkb = {
     layout = "fr";
     variant = "";
   };
-
-  # configure console keymap
   console.keyMap = "fr";
 
-  # enable cups to print documents
-  services.printing.enable = true;
+  services.printing.enable = false;
 
   # enable sound with pipewire and jack support
   services.pulseaudio.enable = false;
@@ -82,19 +48,6 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     jack.enable = true;
-  };
-
-  # enable touchpad support (enabled default in most desktopmanager)
-  # services.xserver.libinput.enable = true;
-
-  # define user accounts
-  users.users.xeylou = {
-    isNormalUser = true;
-    description = "xeylou";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-    #  thunderbird
-    ];
   };
 
   users.users.pierre = {
@@ -115,16 +68,14 @@
     extraGroups = [ "users" ];
   };
 
-  # install firefox
-  programs.firefox.enable = true;
+  programs.firefox.enable = false;
 
   # allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # list packages installed in system profile
   environment.systemPackages = with pkgs; [
-    vim
     amberol
+    vim
     wget
     mtr
     dtools
@@ -139,10 +90,7 @@
     gnomeExtensions.tiling-shell
   ];
 
-  # enable flatpak
   services.flatpak.enable = true;
-
-  # add flathub repository and install flatpak apps via systemd service
   systemd.services.flatpak-setup = {
     description = "setup flatpak and install applications";
     after = [ "network-online.target" ];
@@ -159,10 +107,9 @@
     '';
   };
 
-  # gnome dconf settings for all users
-  # le profil "user" s'applique comme valeurs par defaut pour tous les utilisateurs.
-  # sans locks, les utilisateurs peuvent modifier ces valeurs via leur config locale
-  # (~/.config/dconf/user), qui a priorite sur les valeurs systeme.
+  # le profil "user" s'applique comme valeurs par defaut pour tous les utilisateurs
+  # sans locks les utilisateurs peuvent modifier ces valeurs via leur config locale
+  # (~/.config/dconf/user), qui a priorite sur les valeurs systeme
   programs.dconf = {
     enable = true;
     profiles.user.databases = [
@@ -185,8 +132,8 @@
           };
 
         };
-        # note: burn-my-windows v47 utilise des fichiers de profil, pas dconf.
-        # les profils sont crees via system.activationScripts.configureBurnMyWindows
+        # burn-my-windows v47 utilise des fichiers de profil, pas dconf
+        # profils crees via system.activationScripts.configureBurnMyWindows
       }
     ];
   };
@@ -201,7 +148,7 @@
     };
   };
 
-  # firewall configuration with nftables
+  # firewall configuration nftables
   networking.nftables.enable = true;
   networking.firewall = {
     enable = true;
@@ -216,7 +163,7 @@
   };
 
   # configure burn-my-windows profiles on rebuild
-  # l'extension v47 utilise des fichiers de profil, pas dconf pour les effets
+  # l'extension v47 utilise des fichiers de profil, pas dconf
   system.activationScripts.configureBurnMyWindows = lib.stringAfter [ "users" ] ''
     for user in xeylou pierre paul jacques; do
       BMW_DIR="/home/$user/.config/burn-my-windows/profiles"
@@ -249,7 +196,7 @@ PROFILE_CLOSE
 
   # some programs need suid wrappers, can be configured further or are
   # started in user sessions
-  # programs.mtr.enable = true;
+  programs.mtr.enable = true; # raw sockets without sudo + install it (redondance d'en haut...)
   # programs.gnupg.agent = {
   #   enable = true;
   #   enableSSHSupport = true;
