@@ -38,14 +38,14 @@ in
   # pas besoin de extraLocaleSettings si toutes les LC_* == defaultLocale...
   console.keyMap = "fr";
 
+  services.displayManager.gdm.enable = true;
+  services.desktopManager.gnome.enable = true;
   services.xserver = {
     enable = true;
     xkb = {
       layout = "fr";
       variant = "";
     };
-    displayManager.gdm.enable = true;
-    desktopManager.gnome.enable = true;
   };
 
   services.printing.enable = false;
