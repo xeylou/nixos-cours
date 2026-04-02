@@ -65,18 +65,21 @@
     isNormalUser = true;
     description = "pierre";
     extraGroups = [ "users" ];
+    initialPassword = "pierre";
   };
 
   users.users.paul = {
     isNormalUser = true;
     description = "paul";
     extraGroups = [ "users" ];
+    initialPassword = "paul";
   };
 
   users.users.jacques = {
     isNormalUser = true;
     description = "jacques";
     extraGroups = [ "users" ];
+    initialPassword = "jacques";
   };
 
   programs.firefox.enable = false;
