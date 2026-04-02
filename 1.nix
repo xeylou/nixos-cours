@@ -222,7 +222,7 @@ PROFILE_CLOSE
 
   # some programs need suid wrappers, can be configured further or are
   # started in user sessions
-  # programs.mtr.enable = true;
+  programs.mtr.enable = true; # suid to run non-root
   # programs.gnupg.agent = {
   #   enable = true;
   #   enableSSHSupport = true;
