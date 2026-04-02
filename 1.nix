@@ -16,7 +16,8 @@
   boot.loader.grub.useOSProber = true;
 
   # use latest kernel
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  #boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_6_12;
 
   networking.hostName = "nixos"; # define your hostname
   # networking.wireless.enable = true;  # enables wireless support via wpa_supplicant
