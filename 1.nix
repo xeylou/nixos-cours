@@ -1,37 +1,21 @@
-# edit this configuration file to define what should be installed on
-# your system. help is available in the configuration.nix(5) man page
-# and in the nixos manual (accessible by running 'nixos-help').
-
 { config, pkgs, lib, ... }:
 
 {
   imports =
-    [ # include the results of the hardware scan.
+    [
       ./hardware-configuration.nix
     ];
 
-  # bootloader
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/vda";
   boot.loader.grub.useOSProber = true;
-
-  # use latest kernel
   #boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.kernelPackages = pkgs.linuxPackages_6_12;
 
-  networking.hostName = "nixos"; # define your hostname
-  # networking.wireless.enable = true;  # enables wireless support via wpa_supplicant
+  networking.hostName = "nixos-alexis";
 
-  # configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # set your time zone
   time.timeZone = "Europe/Paris";
-
-  # select internationalisation properties
   i18n.defaultLocale = "en_US.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";
     LC_IDENTIFICATION = "en_US.UTF-8";
@@ -44,26 +28,18 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  # enable the x11 windowing system
   services.xserver.enable = true;
-
-  # enable the gnome desktop environment
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
-  # configure keymap in x11
   services.xserver.xkb = {
     layout = "fr";
     variant = "";
   };
-
-  # configure console keymap
   console.keyMap = "fr";
 
-  # enable cups to print documents
-  services.printing.enable = true;
+  services.printing.enable = false;
 
-  # enable sound with pipewire and jack support
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -74,10 +50,6 @@
     jack.enable = true;
   };
 
-  # enable touchpad support (enabled default in most desktopmanager)
-  # services.xserver.libinput.enable = true;
-
-  # define user accounts
   users.mutableUsers = true;
   users.users = lib.genAttrs [ "pierre" "paul" "jacques" ] (name: {
     isNormalUser = true;
@@ -86,13 +58,9 @@
     initialPassword = name;
   });
 
-  # install firefox
   programs.firefox.enable = false;
-
-  # allow unfree packages
+  programs.mtr.enable = true; # suid to run non-root
   nixpkgs.config.allowUnfree = true;
-
-  # list packages installed in system profile
   environment.systemPackages = with pkgs; [
     vim
     amberol
@@ -112,8 +80,7 @@
 
   # enable flatpak
   services.flatpak.enable = true;
-
-  # add flathub repository and install flatpak apps via systemd service
+  # add flathub repository + install flatpak apps via systemd service
   systemd.services.flatpak-setup = {
     description = "setup flatpak and install applications";
     after = [ "network-online.target" ];
@@ -130,10 +97,10 @@
     '';
   };
 
-  # gnome dconf settings for all users
-  # le profil "user" s'applique comme valeurs par defaut pour tous les utilisateurs.
-  # sans locks, les utilisateurs peuvent modifier ces valeurs via leur config locale
-  # (~/.config/dconf/user), qui a priorite sur les valeurs systeme.
+  # gnome dconf settings for users
+  # le profil "user" s'applique comme valeurs par defaut pour les utilisateurs
+  # sans locks, les utilisateurs peuvent modifier les valeurs via leur config locale
+  # (~/.config/dconf/user), qui a priorite sur les valeurs system
   programs.dconf = {
     enable = true;
     profiles.user.databases = [
@@ -149,7 +116,7 @@
             ];
           };
 
-          # show seconds in the clock and set cursor theme
+          # show seconds in the clock + set cursor theme
           "org/gnome/desktop/interface" = {
             clock-show-seconds = true;
             cursor-theme = "Breeze_Light";
@@ -187,7 +154,7 @@
   };
 
   # configure burn-my-windows profiles on rebuild
-  # l'extension v47 utilise des fichiers de profil, pas dconf pour les effets
+  # l'extension v47 utilise des fichiers de profil, pas dconf
   system.activationScripts.configureBurnMyWindows = lib.stringAfter [ "users" ] ''
     for user in xeylou pierre paul jacques; do
       BMW_DIR="/home/$user/.config/burn-my-windows/profiles"
@@ -219,21 +186,6 @@ PROFILE_CLOSE
 
   virtualisation.virtualbox.guest.enable = true;
 
-
-  # some programs need suid wrappers, can be configured further or are
-  # started in user sessions
-  programs.mtr.enable = true; # suid to run non-root
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # this value determines the nixos release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. it's perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "25.11"; # did you read the comment?
+  system.stateVersion = "25.11";
 
 }
