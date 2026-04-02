@@ -29,12 +29,13 @@ in
     systemd-boot.enable = true;
     efi.canTouchEfiVariables = true;
   };
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.kernelPackages = pkgs.linuxPackages_6_12;
 
   networking.hostName = "nixos-alexis";
   time.timeZone = "Europe/Paris";
   i18n.defaultLocale = "en_US.UTF-8";
-  # pas besoin de extraLocaleSettings si toutes les LC_* = defaultLocale...
+  # pas besoin de extraLocaleSettings si toutes les LC_* == defaultLocale...
   console.keyMap = "fr";
 
   services.xserver = {
@@ -71,34 +72,52 @@ in
 
   programs = {
     firefox.enable = false;
-    mtr.enable = true;
+    mtr.enable = true; # suid to run non-root + install
   };
 
   environment.systemPackages = with pkgs; [
     amberol
-    gnome-tweaks
     vim
     wget
     htop
     dtools
-
-    # gnome
-    gnome-extension-manager
+    mtr # explicite
+    openssh # explicite
+    gnome-tweaks
     kdePackages.breeze
+    # gnome extensions
     gnomeExtensions.appindicator
     gnomeExtensions.dash-to-dock
     gnomeExtensions.burn-my-windows
     gnomeExtensions.tiling-shell
-
-    # brave en natif (remplace le flatpak)
-    brave
   ];
 
+  services.flatpak.enable = true;
+  systemd.services.flatpak-setup = {
+    description = "setup flatpak and install applications";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.mattjakeman.ExtensionManager || true
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.brave.Browser || true
+    '';
+  };
+
+  # le profil "user" s'applique comme valeurs par defaut pour tous les utilisateurs
+  # sans locks les utilisateurs peuvent modifier ces valeurs via leur config locale
+  # (~/.config/dconf/user), qui a priorite sur les valeurs systeme
   programs.dconf = {
     enable = true;
     profiles.user.databases = [
       {
         settings = {
+          # enable gnome extensions
           "org/gnome/shell" = {
             enabled-extensions = [
               "appindicatorsupport@rgcjonas.gmail.com"
@@ -107,15 +126,18 @@ in
               "tilingshell@ferrarodomenico.com"
             ];
           };
+          # show seconds in the clock and set cursor theme
           "org/gnome/desktop/interface" = {
             clock-show-seconds = true;
             cursor-theme = "Breeze_Light";
           };
         };
+        # profils bmw crees via system.activationScripts.configureBurnMyWindows
       }
     ];
   };
 
+  # l'extension utilise des fichiers de profil, pas dconf
   system.activationScripts.configureBurnMyWindows = lib.stringAfter [ "users" ] ''
     for user in ${lib.concatStringsSep " " userList}; do
       BMW_DIR="/home/$user/.config/burn-my-windows/profiles"
@@ -134,6 +156,7 @@ in
     done
   '';
 
+  # enable openssh daemon
   services.openssh = {
     enable = true;
     ports = [ 22 ];
