@@ -1,0 +1,183 @@
+{ config, pkgs, lib, ... }:
+
+{
+  imports =
+    [
+      ./hardware-configuration.nix
+    ];
+
+  nix.settings.auto-optimise-store = true;
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
+  boot.loader.grub.enable = true;
+  boot.loader.grub.device = "/dev/vda";
+  boot.loader.grub.useOSProber = true;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.tmp.cleanOnBoot = true;
+
+  networking.hostName = "nixos-alexis";
+  networking.useDHCP = lib.mkDefault true;
+  networking.nameservers = [ "8.8.8.8" "1.1.1.1" ];
+
+  time.timeZone = "Europe/Paris";
+  i18n.defaultLocale = "en_US.UTF-8";
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "en_US.UTF-8";
+    LC_IDENTIFICATION = "en_US.UTF-8";
+    LC_MEASUREMENT = "en_US.UTF-8";
+    LC_MONETARY = "en_US.UTF-8";
+    LC_NAME = "en_US.UTF-8";
+    LC_NUMERIC = "en_US.UTF-8";
+    LC_PAPER = "en_US.UTF-8";
+    LC_TELEPHONE = "en_US.UTF-8";
+    LC_TIME = "en_US.UTF-8";
+  };
+
+  services.xserver.xkb = {
+    layout = "fr";
+    variant = "";
+  };
+  console.keyMap = "fr";
+
+  services.xserver.enable = true;
+  services.displayManager.gdm.enable = true;
+  services.desktopManager.gnome.enable = true;
+
+  services.printing.enable = false;
+  services.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    jack.enable = true;
+  };
+
+  users.mutableUsers = true;
+  users.users = lib.genAttrs [ "pierre" "paul" "jacques" ] (name: {
+    isNormalUser = true;
+    description = name;
+    extraGroups = [ "networkmanager" "wheel" "users" ];
+    initialPassword = name;
+  });
+
+  nixpkgs.config.allowUnfree = true;
+  environment.systemPackages = with pkgs; [
+    amberol
+    vim
+    wget
+    mtr
+    dtools
+    htop
+    gnome-tweaks
+    kdePackages.breeze
+    openssh
+    # extensions GNOME
+    gnomeExtensions.appindicator
+    gnomeExtensions.dash-to-dock
+    gnomeExtensions.burn-my-windows
+    gnomeExtensions.tiling-shell
+  ];
+
+  programs.firefox.enable = false;
+  programs.mtr.enable = true;
+  services.flatpak.enable = true;
+
+  services.openssh = {
+    enable = true;
+    ports = [ 22 ];
+    settings = {
+      PasswordAuthentication = true;
+      PermitRootLogin = "prohibit-password";
+    };
+  };
+
+  networking.nftables.enable = true;
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 22 80 443 ];
+  };
+
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 50;
+  };
+
+  systemd.services.flatpak-setup = {
+    description = "setup flatpak and install applications";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      ${pkgs.flatpak}/bin/flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.mattjakeman.ExtensionManager || true
+      ${pkgs.flatpak}/bin/flatpak install -y --noninteractive flathub com.brave.Browser || true
+    '';
+  };
+
+  programs.dconf = {
+    enable = true;
+    profiles.user.databases = [
+      {
+        settings = {
+          "org/gnome/shell" = {
+            enabled-extensions = [
+              "appindicatorsupport@rgcjonas.gmail.com"
+              "dash-to-dock@micxgx.gmail.com"
+              "burn-my-windows@schneegans.github.com"
+              "tiling-shell@ferrarodomenico.com"
+            ];
+          };
+          "org/gnome/desktop/interface" = {
+            clock-show-seconds = true;
+            cursor-theme = "Breeze_Light";
+          };
+        };
+      }
+    ];
+  };
+
+  # activation profils Burn-My-Windows
+  system.activationScripts.configureBurnMyWindows = lib.stringAfter [ "users" ] ''
+    for user in pierre paul jacques; do
+      BMW_DIR="/home/$user/.config/burn-my-windows/profiles"
+      if [ -d "/home/$user" ]; then
+        mkdir -p "$BMW_DIR"
+
+        # Profil ouverture
+        cat > "$BMW_DIR/1000000000000001.conf" << 'PROFILE_OPEN'
+[burn-my-windows-profile]
+profile-animation-type=1
+energize-a-enable-effect=true
+portal-enable-effect=true
+hexagon-enable-effect=true
+fire-enable-effect=false
+PROFILE_OPEN
+
+        # Profil fermeture
+        cat > "$BMW_DIR/1000000000000002.conf" << 'PROFILE_CLOSE'
+[burn-my-windows-profile]
+profile-animation-type=2
+broken-glass-enable-effect=true
+incinerate-enable-effect=true
+fire-enable-effect=false
+PROFILE_CLOSE
+
+        chown -R $user:users /home/$user/.config/burn-my-windows
+      fi
+    done
+  '';
+
+  system.stateVersion = "25.11";
+
+}
