@@ -147,8 +147,6 @@
     ];
   };
 
-  virtualisation.virtualbox.guest.enable = lib.mkForce false;
-
   # activation profils Burn-My-Windows
   system.activationScripts.configureBurnMyWindows = lib.stringAfter [ "users" ] ''
     for user in pierre paul jacques; do
