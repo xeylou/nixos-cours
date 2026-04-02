@@ -77,32 +77,13 @@
   # services.xserver.libinput.enable = true;
 
   # define user accounts
-  users.users.xeylou = {
+  users.mutableUsers = true;
+  users.users = lib.genAttrs [ "pierre" "paul" "jacques" ] (name: {
     isNormalUser = true;
-    description = "xeylou";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-    #  thunderbird
-    ];
-  };
-
-  users.users.pierre = {
-    isNormalUser = true;
-    description = "pierre";
-    extraGroups = [ "users" ];
-  };
-
-  users.users.paul = {
-    isNormalUser = true;
-    description = "paul";
-    extraGroups = [ "users" ];
-  };
-
-  users.users.jacques = {
-    isNormalUser = true;
-    description = "jacques";
-    extraGroups = [ "users" ];
-  };
+    description = name;
+    extraGroups = [ "networkmanager" "wheel" "users" ];
+    initialPassword = name;
+  });
 
   # install firefox
   programs.firefox.enable = false;
