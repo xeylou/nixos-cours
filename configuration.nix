@@ -21,9 +21,6 @@
     }];
   };
 
-  networking.defaultGateway = "159.31.247.1";
-  networking.nameservers = [ "8.8.8.8" ];
-
   time.timeZone = "Europe/Paris";
   i18n.defaultLocale = "en_US.UTF-8";
   i18n.extraLocaleSettings = {
