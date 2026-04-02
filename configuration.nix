@@ -135,7 +135,7 @@
               "appindicatorsupport@rgcjonas.gmail.com"
               "dash-to-dock@micxgx.gmail.com"
               "burn-my-windows@schneegans.github.com"
-              "tiling-shell@ferrarodomenico.com"
+              "tilingshell@ferrarodomenico.com"
             ];
           };
 
