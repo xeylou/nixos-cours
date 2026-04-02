@@ -217,6 +217,8 @@ PROFILE_CLOSE
     done
   '';
 
+  virtualisation.virtualbox.guest.enable = true
+
 
   # some programs need suid wrappers, can be configured further or are
   # started in user sessions
